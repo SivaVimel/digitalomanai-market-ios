@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DigitalOman.ai — Privacy-First AI Assistant</title>
+<meta name="description" content="DigitalOman.ai is a privacy-first AI assistant. Run AI locally on your device or connect any cloud provider (ChatGPT, Claude, Gemini, more). Notes, To-Do, Gmail, Transcription — all in one app. Your data stays yours.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0a0c;
+    --bg-secondary: #111115;
+    --bg-card: #16161b;
+    --bg-card-hover: #1c1c22;
+    --border: #2a2a32;
+    --border-accent: #00bcd4;
+    --text-primary: #f0f0f5;
+    --text-secondary: #a0a0b0;
+    --text-muted: #6a6a7a;
+    --accent-cyan: #00e5ff;
+    --accent-cyan-dim: #00bcd4;
+    --accent-cyan-glow: rgba(0, 229, 255, 0.08);
+    --accent-green: #4ade80;
+    --accent-amber: #fbbf24;
+    --accent-rose: #fb7185;
+    --gradient-cyan: linear-gradient(135deg, #00e5ff 0%, #00bcd4 100%);
+    --font-body: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #2a2a32 transparent;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.75;
+    font-size: 16px;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: rgba(0, 229, 255, 0.2);
+    color: var(--text-primary);
+  }
+
+  /* — Ambient — */
+  .ambient {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .ambient::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(0, 229, 255, 0.04) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: float1 20s ease-in-out infinite;
+  }
+  .ambient::after {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(0, 188, 212, 0.03) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: float2 25s ease-in-out infinite;
+  }
+  @keyframes float1 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(80px,60px); } }
+  @keyframes float2 { 0%, 100% { transform: translate(0,0); } 50% { transform: translate(-60px,-80px); } }
+
+  /* — Header — */
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10, 10, 12, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .header-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .logo-mark {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--gradient-cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--bg-primary);
+  }
+  .logo-text { font-size: 17px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.3px; }
+  .logo-text span { color: var(--accent-cyan); }
+  .header-badge {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    letter-spacing: 0.5px;
+  }
+
+  /* — Content — */
+  .content-wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* — Hero — */
+  .hero {
+    padding: 88px 0 56px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent-cyan);
+    background: var(--accent-cyan-glow);
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 24px;
+  }
+  .hero-label::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-cyan);
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 700;
+    letter-spacing: -1.8px;
+    line-height: 1.1;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+  }
+  .hero h1 .accent {
+    background: var(--gradient-cyan);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero p.lede {
+    font-size: 18px;
+    color: var(--text-secondary);
+    max-width: 580px;
+    margin: 0 auto 36px;
+    line-height: 1.65;
+  }
+  .hero-cta-row {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 13px 22px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    letter-spacing: -0.2px;
+  }
+  .cta-btn.primary {
+    color: var(--bg-primary);
+    background: var(--gradient-cyan);
+    border: 1px solid transparent;
+  }
+  .cta-btn.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0, 229, 255, 0.2);
+  }
+  .cta-btn.secondary {
+    color: var(--text-primary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+  }
+  .cta-btn.secondary:hover {
+    border-color: rgba(0, 229, 255, 0.3);
+    background: var(--bg-card-hover);
+  }
+  .cta-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .hero-meta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .hero-meta span { display: inline-flex; align-items: center; gap: 6px; }
+  .hero-meta span::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent-green);
+  }
+
+  /* — Section Titles — */
+  .section-block {
+    padding: 56px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-block:last-child { border-bottom: none; }
+  .section-title-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .section-icon {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent-cyan);
+    background: var(--accent-cyan-glow);
+    border: 1px solid rgba(0, 229, 255, 0.12);
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .section-block h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.6px;
+    color: var(--text-primary);
+  }
+  .section-lede {
+    color: var(--text-secondary);
+    font-size: 15.5px;
+    line-height: 1.8;
+    margin-bottom: 32px;
+    max-width: 640px;
+  }
+
+  /* — Feature Grid — */
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 14px;
+  }
+  .feature-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.25s ease;
+  }
+  .feature-card:hover {
+    border-color: rgba(0, 229, 255, 0.25);
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+  }
+  .feature-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+  .feature-icon svg { width: 22px; height: 22px; }
+  .feature-icon.cyan { background: rgba(0, 229, 255, 0.1); color: var(--accent-cyan); }
+  .feature-icon.green { background: rgba(74, 222, 128, 0.1); color: var(--accent-green); }
+  .feature-icon.amber { background: rgba(251, 191, 36, 0.1); color: var(--accent-amber); }
+  .feature-icon.rose { background: rgba(251, 113, 133, 0.1); color: var(--accent-rose); }
+  .feature-card h3 {
+    font-size: 15.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    letter-spacing: -0.2px;
+  }
+  .feature-card p {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    line-height: 1.65;
+  }
+
+  /* — Pillar (privacy section) — */
+  .pillar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px;
+    margin-top: 8px;
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+  }
+  .pillar-icon-large {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+    background: var(--accent-cyan-glow);
+    border: 1px solid rgba(0, 229, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-cyan);
+    flex-shrink: 0;
+  }
+  .pillar-icon-large svg { width: 32px; height: 32px; }
+  .pillar-body h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--text-primary);
+    letter-spacing: -0.4px;
+  }
+  .pillar-body p {
+    color: var(--text-secondary);
+    font-size: 15px;
+    line-height: 1.75;
+  }
+  .pillar-body p + p { margin-top: 12px; }
+  .pillar-body strong { color: var(--text-primary); font-weight: 600; }
+  @media (max-width: 600px) {
+    .pillar { flex-direction: column; padding: 28px; gap: 20px; }
+  }
+
+  /* — Provider Pills — */
+  .providers-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .provider-pill {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 8px 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    letter-spacing: 0.3px;
+    transition: all 0.2s;
+  }
+  .provider-pill:hover {
+    border-color: rgba(0, 229, 255, 0.3);
+    color: var(--accent-cyan);
+  }
+
+  /* — Stats — */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 18px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 30px;
+    font-weight: 700;
+    background: var(--gradient-cyan);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -1px;
+    margin-bottom: 6px;
+    line-height: 1.1;
+  }
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* — Showcase rows — */
+  .showcase-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin-top: 8px;
+  }
+  .showcase-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    transition: all 0.25s ease;
+  }
+  .showcase-card:hover {
+    border-color: rgba(0, 229, 255, 0.2);
+    background: var(--bg-card-hover);
+  }
+  .showcase-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent-cyan-dim);
+    margin-bottom: 14px;
+    display: inline-block;
+  }
+  .showcase-card h3 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+  }
+  .showcase-card p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+  .showcase-card ul {
+    margin-top: 14px;
+    padding-left: 0;
+    list-style: none;
+  }
+  .showcase-card li {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+    padding-left: 20px;
+    position: relative;
+  }
+  .showcase-card li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 11px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-cyan-dim);
+  }
+
+  /* — Final CTA — */
+  .final-cta {
+    text-align: center;
+    padding: 72px 24px;
+    background: linear-gradient(180deg, transparent 0%, rgba(0, 229, 255, 0.025) 100%);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 1;
+  }
+  .final-cta h2 {
+    font-size: clamp(28px, 4vw, 36px);
+    font-weight: 700;
+    letter-spacing: -0.8px;
+    margin-bottom: 14px;
+    color: var(--text-primary);
+  }
+  .final-cta p {
+    font-size: 16px;
+    color: var(--text-secondary);
+    max-width: 480px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+
+  /* — Footer — */
+  .site-footer {
+    position: relative;
+    z-index: 1;
+    padding: 48px 24px;
+    text-align: center;
+  }
+  .footer-inner { max-width: 860px; margin: 0 auto; }
+  .footer-logo { font-size: 18px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+  .footer-logo span { color: var(--accent-cyan); }
+  .footer-text { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+  .footer-divider { width: 40px; height: 1px; background: var(--border); margin: 24px auto; }
+  .footer-links { display: flex; justify-content: center; gap: 24px; flex-wrap: wrap; }
+  .footer-links a { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+  .footer-links a:hover { color: var(--accent-cyan); }
+
+  @media (max-width: 600px) {
+    .hero { padding: 60px 0 40px; }
+    .section-block { padding: 40px 0; }
+    .section-title-row { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .feature-grid, .showcase-row { grid-template-columns: 1fr; }
+    .hero-cta-row { flex-direction: column; align-items: stretch; }
+    .cta-btn { justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="#" class="logo">
+      <div class="logo-mark">D</div>
+      <div class="logo-text">Digital<span>Oman</span>.ai</div>
+    </a>
+    <div class="header-badge">PRODUCT</div>
+  </div>
+</header>
+
+<main class="content-wrapper">
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-label">Privacy-First AI Assistant</div>
+    <h1>One AI app.<br><span class="accent">Every model.</span><br>Zero compromises.</h1>
+    <p class="lede">Chat with a local LLM that runs entirely on your device, or plug in your own API key for ChatGPT, Claude, Gemini, and more. Your conversations, files, and credentials never leave your phone.</p>
+
+    <div class="hero-cta-row">
+      <a href="https://apps.apple.com/om/app/digitaloman-ai/id6760588911" class="cta-btn primary">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.02-2.16 1.77-3.2 1.85-3.25-1.01-1.47-2.57-1.67-3.13-1.69-1.33-.13-2.6.78-3.27.78-.69 0-1.72-.77-2.83-.74-1.45.02-2.81.84-3.55 2.14-1.53 2.66-.39 6.59 1.09 8.75.74 1.06 1.6 2.24 2.71 2.2 1.09-.04 1.5-.7 2.82-.7 1.31 0 1.69.7 2.83.68 1.18-.02 1.92-1.07 2.63-2.13.83-1.21 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.32-3.49zM14.78 5.69c.6-.74 1.01-1.76.9-2.79-.87.04-1.94.58-2.57 1.31-.56.66-1.06 1.7-.93 2.71.97.07 1.97-.49 2.6-1.23z"/></svg>
+        Download on the App Store
+      </a>
+      <a href="https://play.google.com/store/apps/details?id=com.digitaloman.ai&amp;pcampaignid=web_share" class="cta-btn secondary">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.6 1.6c-.4.4-.6 1-.6 1.7v17.4c0 .7.2 1.3.6 1.7l.1.1L13.4 13v-.2L3.7 1.5l-.1.1z"/><path d="M16.6 16.1l-3.2-3.2v-.2l3.2-3.2.1.1 3.8 2.2c1.1.6 1.1 1.6 0 2.3l-3.8 2.1-.1-.1z"/><path d="M16.7 16l-3.3-3.3L3.6 22.4c.4.4.9.4 1.6.1L16.7 16"/><path d="M16.7 9.4L5.2 2.9c-.7-.4-1.2-.3-1.6.1l9.8 9.7 3.3-3.3z"/></svg>
+        Get it on Google Play
+      </a>
+    </div>
+
+    <div class="hero-meta">
+      <span>Free to install</span>
+      <span>No account required</span>
+      <span>Works offline</span>
+    </div>
+  </section>
+
+  <!-- Stats / Quick facts -->
+  <section class="section-block">
+    <div class="section-title-row">
+      <span class="section-icon">01</span>
+      <h2>At a glance</h2>
+    </div>
+    <p class="section-lede">DigitalOman.ai is built for people who want a powerful AI assistant without giving up control of their data.</p>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-value">7+</div>
+        <div class="stat-label">Cloud AI providers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">100%</div>
+        <div class="stat-label">On-device storage</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">∞</div>
+        <div class="stat-label">Custom local models</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">0</div>
+        <div class="stat-label">Tracking cookies</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features grid -->
+  <section class="section-block" id="features">
+    <div class="section-title-row">
+      <span class="section-icon">02</span>
+      <h2>What it does</h2>
+    </div>
+    <p class="section-lede">Productivity, conversation, and content tools — all in one privacy-respecting app.</p>
+
+    <div class="feature-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon cyan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.4 8.4 0 0 1-3.8-.9L3 21l1.9-5.7a8.4 8.4 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.4 8.4 0 0 1 3.8-.9h.5a8.5 8.5 0 0 1 8 8z"/></svg>
+        </div>
+        <h3>Conversational AI</h3>
+        <p>Natural multi-turn chat with rich responses. Works with both local and cloud models — same interface, same speed.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <h3>Runs on-device</h3>
+        <p>A built-in local model means you can chat with AI even on a plane, in a tunnel, or wherever the network isn't.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10 15 15 0 0 1 4-10z"/></svg>
+        </div>
+        <h3>Web search</h3>
+        <p>Live results filtered by news, location, images, or video. The AI reads results in real time and cites sources.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon rose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <h3>PDF &amp; file understanding</h3>
+        <p>Drop a PDF, image, or text file into the chat. The app extracts content and feeds it to your AI for summaries, Q&amp;A, or analysis.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon cyan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+        </div>
+        <h3>Vision &amp; OCR</h3>
+        <p>Send a photo for instant analysis. Vision-capable models read it directly; otherwise on-device OCR extracts text and hands it off.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </div>
+        <h3>Voice transcription</h3>
+        <p>Record speech for real-time transcription. AI summarizes the result and optionally saves it back to your Notes.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon amber">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </div>
+        <h3>Gmail in-app</h3>
+        <p>Read, summarize, compose, and smart-reply directly inside the app. App passwords stay on-device — we never see them.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon rose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <h3>Notes &amp; to-do</h3>
+        <p>AI-enhanced notes with side-by-side polished versions. Date-aware tasks that quietly inform every prompt for context.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Privacy pillar -->
+  <section class="section-block" id="privacy">
+    <div class="section-title-row">
+      <span class="section-icon">03</span>
+      <h2>Privacy isn't a feature.<br>It's the foundation.</h2>
+    </div>
+
+    <div class="pillar">
+      <div class="pillar-icon-large">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <div class="pillar-body">
+        <h3>Your data never touches our servers.</h3>
+        <p><strong>Conversations, API keys, Gmail credentials, notes, and to-do items live exclusively on your device.</strong> We don't collect, mirror, or back them up anywhere. Even your usage analytics are minimal and anonymized.</p>
+        <p>When you chat with the bundled local model, <strong>nothing leaves your phone</strong> — not the message, not the model output. When you use a cloud provider, the request goes directly from your device to their API using your key. We're not in the middle.</p>
+        <p>The local model itself is downloaded from a public CDN on first launch (so the install size stays small) and then runs entirely offline.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Providers -->
+  <section class="section-block">
+    <div class="section-title-row">
+      <span class="section-icon">04</span>
+      <h2>Plug in any AI</h2>
+    </div>
+    <p class="section-lede">Connect your own API key for any of these providers — or paste in a custom OpenAI-compatible endpoint to use a self-hosted model, Ollama, LM Studio, OpenRouter, or anything else.</p>
+
+    <div class="providers-row">
+      <span class="provider-pill">OpenAI / ChatGPT</span>
+      <span class="provider-pill">Anthropic / Claude</span>
+      <span class="provider-pill">Google Gemini</span>
+      <span class="provider-pill">Groq</span>
+      <span class="provider-pill">Mistral</span>
+      <span class="provider-pill">DeepSeek</span>
+      <span class="provider-pill">Qwen</span>
+      <span class="provider-pill">+ Custom (Ollama, LM Studio, OpenRouter, …)</span>
+    </div>
+  </section>
+
+  <!-- CoWork showcase -->
+  <section class="section-block" id="cowork">
+    <div class="section-title-row">
+      <span class="section-icon">05</span>
+      <h2>CoWork — your AI gets things done</h2>
+    </div>
+    <p class="section-lede">CoWork is a set of focused tools where AI doesn't just answer questions — it helps you finish real work.</p>
+
+    <div class="showcase-row">
+      <div class="showcase-card">
+        <span class="showcase-tag">CoWork · Gmail</span>
+        <h3>Inbox triage in seconds</h3>
+        <p>Connect your Gmail with an app password and let AI:</p>
+        <ul>
+          <li>Summarize your recent inbox</li>
+          <li>Draft new emails with tone control</li>
+          <li>Generate smart, context-aware replies</li>
+          <li>Disconnect any time — credentials stay local</li>
+        </ul>
+      </div>
+      <div class="showcase-card">
+        <span class="showcase-tag">CoWork · Notes &amp; To-Do</span>
+        <h3>Writing that comes back better</h3>
+        <p>Drop a rough thought, get a polished version next to it. Export as TXT, PDF, or DOCX. Tasks with dates feed your AI for time-aware context.</p>
+      </div>
+      <div class="showcase-card">
+        <span class="showcase-tag">CoWork · Transcribe</span>
+        <h3>From speech to clean notes</h3>
+        <p>Record meetings, voice memos, or lectures. Get real-time transcription, AI summaries, and one-tap save to Notes.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Vision / Why -->
+  <section class="section-block">
+    <div class="section-title-row">
+      <span class="section-icon">06</span>
+      <h2>Why we built this</h2>
+    </div>
+    <p class="section-lede">Most AI apps make you pick between capability and privacy. We built DigitalOman.ai because that's a false choice.</p>
+
+    <div class="pillar" style="border-left: 3px solid var(--accent-cyan-dim);">
+      <div class="pillar-body">
+        <h3>One app. Your AI. Your data.</h3>
+        <p>You shouldn't need a separate app for ChatGPT, another for Claude, a third for note-taking, and a privacy disclaimer the size of a novel. DigitalOman.ai is one place where you bring the AI you trust, store your data where it belongs (with you), and get real work done.</p>
+        <p>We're a small team that ships fast. New CoWork tools are coming. If you have an idea, <a href="mailto:support@digitaloman.ai?subject=Feature%20Request" style="color: var(--accent-cyan); text-decoration: none; font-weight: 600;">tell us</a>.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Final CTA -->
+<section class="final-cta">
+  <h2>Ready to try it?</h2>
+  <p>Free to install. Works the moment you open it. No sign-up, no tracking, no compromises.</p>
+  <div class="hero-cta-row" style="margin-bottom: 0;">
+    <a href="https://apps.apple.com/om/app/digitaloman-ai/id6760588911" class="cta-btn primary">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.04c-.02-2.16 1.77-3.2 1.85-3.25-1.01-1.47-2.57-1.67-3.13-1.69-1.33-.13-2.6.78-3.27.78-.69 0-1.72-.77-2.83-.74-1.45.02-2.81.84-3.55 2.14-1.53 2.66-.39 6.59 1.09 8.75.74 1.06 1.6 2.24 2.71 2.2 1.09-.04 1.5-.7 2.82-.7 1.31 0 1.69.7 2.83.68 1.18-.02 1.92-1.07 2.63-2.13.83-1.21 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.32-3.49zM14.78 5.69c.6-.74 1.01-1.76.9-2.79-.87.04-1.94.58-2.57 1.31-.56.66-1.06 1.7-.93 2.71.97.07 1.97-.49 2.6-1.23z"/></svg>
+      App Store
+    </a>
+    <a href="https://play.google.com/store/apps/details?id=com.digitaloman.ai&amp;pcampaignid=web_share" class="cta-btn secondary">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3.6 1.6c-.4.4-.6 1-.6 1.7v17.4c0 .7.2 1.3.6 1.7l.1.1L13.4 13v-.2L3.7 1.5l-.1.1z"/><path d="M16.6 16.1l-3.2-3.2v-.2l3.2-3.2.1.1 3.8 2.2c1.1.6 1.1 1.6 0 2.3l-3.8 2.1-.1-.1z"/><path d="M16.7 16l-3.3-3.3L3.6 22.4c.4.4.9.4 1.6.1L16.7 16"/><path d="M16.7 9.4L5.2 2.9c-.7-.4-1.2-.3-1.6.1l9.8 9.7 3.3-3.3z"/></svg>
+      Google Play
+    </a>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-logo">Digital<span>Oman</span>.ai</div>
+    <p class="footer-text">Privacy-first AI assistant — your data stays yours.</p>
+    <div class="footer-divider"></div>
+    <div class="footer-links">
+      <a href="https://appsupport.digitaloman.ai">Support</a>
+      <a href="https://appprivacy.digitaloman.ai">Privacy Policy</a>
+      <a href="mailto:support@digitaloman.ai">Contact</a>
+    </div>
+    <p class="footer-text" style="margin-top: 24px;">&copy; 2026 DigitalOman.ai. All rights reserved.</p>
+  </div>
+</footer>
+
+</body>
+</html>
